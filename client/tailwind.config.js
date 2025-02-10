@@ -5,7 +5,9 @@ export default {
     extend: {
       colors: {
         primary: "#80C4E9",
+        link: "#207de9",
         muted: "#71717a",
+        danger: "#ef4444",
       },
     },
   },

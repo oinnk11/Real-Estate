@@ -1,7 +1,6 @@
-import React from "react";
-import Logo from "../components/Logo";
 import { Facebook, Instagram } from "lucide-react";
 import { Link } from "react-router-dom";
+import logoWhite from "../assets/logo-white.png";
 
 const Footer = () => {
   const year = new Date().getFullYear();
@@ -9,7 +8,7 @@ const Footer = () => {
     <footer className="w-full bg-[#0B192C] text-white">
       <div className="fluid py-12 md:py-24 flex gap-5 flex-col md:flex-row justify-between">
         <div className="space-y-6 w-full md:w-[60%]">
-          <img src="logo-white.png" className="h-5 object-contain" />
+          <img src={logoWhite} className="h-5 object-contain" />
 
           <p className="text-sm w-full md:max-w-[400px] text-white text-justify">
             Discover your dream home with ease. Our real estate platform offers

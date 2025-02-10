@@ -1,16 +1,37 @@
-import hero from "../assets/hero.jpg";
-import Input from "../components/Input";
-import Button from "../components/Button";
-import { Building2, ChevronRight, House, Search } from "lucide-react";
-import listings from "../assets/data/listings";
-import PropertyCard from "../components/PropertyCard";
+import hero from "../../assets/hero.jpg";
+import Input from "../../components/Input";
+import Button from "../../components/Button";
+import { Building2, ChevronRight, House, Loader2, Search } from "lucide-react";
+import PropertyCard from "../../components/PropertyCard";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { getTopViewedListings } from "../../hooks/useListings";
+
 const Home = () => {
+  const [topViewListings, setTopViewListings] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchTopViewedListings = async () => {
+    setIsLoading(true);
+
+    const response = await getTopViewedListings({ limit: 8 });
+
+    if (response.success) {
+      setTopViewListings(response.data);
+    }
+
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchTopViewedListings();
+  }, []);
+
   return (
     <div className="space-y-32 mb-24">
       {/* HERO SECTION */}
       <section className="relative w-full py-6 flex flex-col gap-12 items-center max-md:justify-center lg:flex-row pt-12 fluid min-h-[calc(100vh-200px)] bg-gradient-to-b from-white to-sky-50">
-        <div className="w-full lg:w-[50%] space-y-8 lg:pl-12">
+        <div className="w-full lg:w-[50%] space-y-8 ">
           <h1 className="text-4xl font-bold leading-relaxed max-lg:text-center">
             Find Real Estate <br /> That Best Suits You. 👌
           </h1>
@@ -27,7 +48,7 @@ const Home = () => {
         </div>
 
         {/* SEARCH */}
-        <div className="absolute -bottom-[5%] left-1/2 transform -translate-x-1/2 w-[90%] lg:w-[60%] rounded-lg border shadow-md py-6 px-8 bg-white">
+        <div className="absolute -bottom-[5%] left-1/2 transform -translate-x-1/2 w-[90%] lg:w-[60%] rounded-xl border shadow-md py-6 px-8 bg-white">
           <h1 className="font-semibold text-xl">
             Search from our wide range of listings! 🔍
           </h1>
@@ -66,7 +87,7 @@ const Home = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="border rounded-lg shadow-md flex-1 p-8 min-h-[250px] flex flex-col gap-3">
+          <div className="border rounded-xl shadow-md flex-1 p-8 min-h-[250px] flex flex-col gap-3">
             <House className="text-primary size-12" />
 
             <h2 className="font-bold text-2xl mt-6">Find your dream house</h2>
@@ -78,7 +99,7 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="border rounded-lg shadow-md flex-1 p-8 min-h-[250px] flex flex-col gap-3">
+          <div className="border rounded-xl shadow-md flex-1 p-8 min-h-[250px] flex flex-col gap-3">
             <Building2 className="text-primary size-12" />
 
             <h2 className="font-bold text-2xl mt-6">
@@ -91,7 +112,7 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="border rounded-lg shadow-md flex-1 p-8 min-h-[250px] flex flex-col gap-3">
+          <div className="border rounded-xl shadow-md flex-1 p-8 min-h-[250px] flex flex-col gap-3">
             <Search className="text-primary size-12" />
 
             <h2 className="font-bold text-2xl mt-6">Smart Search</h2>
@@ -106,37 +127,35 @@ const Home = () => {
       </section>
 
       {/* LISTINGS SECTION */}
-      <section className="fluid space-y-12 py-6">
-        <div>
+      {topViewListings.length > 0 && (
+        <section className="fluid space-y-12 py-6">
           <h3 className="text-primary font-medium uppercase">Property</h3>
-        </div>
 
-        <div className="flex justify-between items-center">
-          <h1 className="font-bold text-2xl xl:text-4xl leading-snug w-full">
-            Top Viewed Properties
-          </h1>
-          <Link
-            to="/listings"
-            className="flex items-center text-sky-600 underline underline-offset-4 flex-1"
-          >
-            Explore <ChevronRight className="size-5" />
-          </Link>
-        </div>
+          <div className="flex justify-between items-center">
+            <h1 className="font-bold text-2xl xl:text-4xl leading-snug w-full">
+              Top Viewed Properties
+            </h1>
+            <Link
+              to="/listings"
+              className="flex items-center text-sky-600 underline underline-offset-4 flex-1"
+            >
+              Explore <ChevronRight className="size-5" />
+            </Link>
+          </div>
 
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
-          {listings.map((item) => (
-            <PropertyCard
-              title={item.title}
-              img={item.imageUrl}
-              location={item.location}
-              price={item.price}
-              bathroom={item.bathrooms}
-              bedrooms={item.bedrooms}
-              key={item.id + item.title}
-            />
-          ))}
-        </div>
-      </section>
+          {isLoading ? (
+            <div className="w-full flex items-center justify-center h-[200px]">
+              <Loader2 className="text-primary animate-spin duration-1000" />
+            </div>
+          ) : (
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-x-3 gap-y-6">
+              {topViewListings.map((item) => (
+                <PropertyCard key={item.id + item.title} listing={item} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 };
