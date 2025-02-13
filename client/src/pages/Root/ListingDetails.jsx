@@ -16,11 +16,16 @@ import formatNumber from "../../utils/formatNumber";
 import { useEffect, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import Modal from "react-modal";
-import { getListingById, handleListingClick } from "../../hooks/useListings";
+import { getListingById } from "../../hooks/useListings";
 import placeholder from "../../assets/profilePlaceholder.png";
+import useAuthContext from "../../hooks/useAuthContext";
+import { initiatePayment } from "../../hooks/usePayment";
+import { toast } from "react-toastify";
 
 const ListingDetails = () => {
   const { id } = useParams();
+
+  const { user } = useAuthContext();
 
   const [listing, setListing] = useState({});
 
@@ -43,24 +48,7 @@ const ListingDetails = () => {
     noOfImages > 5 ? 5 : 0
   );
 
-  const fetchListingById = async () => {
-    const response = await getListingById(id);
-
-    if (response.success) {
-      setListing(response.data[0]);
-    }
-
-    setIsLoading(false);
-  };
-
-  const increaseListingView = async () => {
-    await handleListingClick(listing.id);
-  };
-
-  useEffect(() => {
-    fetchListingById();
-    increaseListingView();
-  }, [listing.id]);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   // FUNCTION TO SET PREVIEW IMAGE
   const setPreview = (index) => {
@@ -79,13 +67,45 @@ const ListingDetails = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchListingById = async () => {
+      const response = await getListingById(id);
+
+      if (response.success) {
+        setListing(response.data);
+      }
+
+      setIsLoading(false);
+    };
+
+    fetchListingById();
+  }, [id, listing?.id]);
+
+  const redirectToPayment = (url) => {
+    window.location.href = url;
+  };
+
+  const onBook = async () => {
+    const response = await initiatePayment({
+      amount: listing.price,
+      listingId: listing.id,
+    });
+    console.log("🚀 ~ response:", response);
+
+    if (response.success) {
+      redirectToPayment(response.data.paymentUrl);
+    } else {
+      toast.error(response.error);
+    }
+  };
+
   return (
     <>
       {isLoading ? (
         <div className="w-full h-[calc(100vh-40vh)] flex flex-col gap-5 items-center justify-center">
           <Loader2 className="animate-spin ease-in-out text-primary" />
         </div>
-      ) : !listing.id ? (
+      ) : !listing ? (
         <div className="h-[calc(100vh-40vh)] flex flex-col items-center justify-center gap-5">
           <h1 className="text-2xl font-semibold">Opps! Nothing to see here.</h1>
           <Link to="/">
@@ -94,38 +114,6 @@ const ListingDetails = () => {
         </div>
       ) : (
         <section className="fluid">
-          {/* IMAGE MODAL */}
-          <Modal
-            isOpen={isImageModalOpen}
-            onRequestClose={() => setIsImageModalOpen(false)}
-            className="h-screen bg-black/85"
-          >
-            <button
-              className="absolute right-5 top-5 z-30 bg-black/90 inline-flex items-center justify-center p-1 rounded-full"
-              onClick={() => setIsImageModalOpen(false)}
-            >
-              <X className="text-white" />
-            </button>
-            <div className="relative flex items-center justify-center h-screen">
-              <img src={images[selectedImageModal]} />
-              <button
-                className="absolute left-5 top-1/2 z-20 bg-black/90 inline-flex items-center justify-center p-1 rounded-full disabled:hidden"
-                disabled={!selectedImageModal > 0}
-                onClick={() => setPreviousImage()}
-              >
-                <ChevronLeft className="text-white" />
-              </button>
-
-              <button
-                className="absolute right-5 top-1/2 z-20 bg-black/90 inline-flex items-center justify-center p-1 rounded-full disabled:hidden"
-                disabled={!(selectedImageModal < noOfImages - 1)}
-                onClick={() => setNextImage()}
-              >
-                <ChevronRight className="text-white" />
-              </button>
-            </div>
-          </Modal>
-
           <div className="py-10 space-y-12">
             {/* IMAGES */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-center">
@@ -185,6 +173,16 @@ const ListingDetails = () => {
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="space-y-4 flex-1">
                 <div className="space-y-3 flex-1 border-b pb-5">
+                  <p
+                    className={twMerge(
+                      "text-sm font-semibold",
+                      listing.status === "Booked"
+                        ? "text-danger"
+                        : "text-green-500"
+                    )}
+                  >
+                    {listing.status}
+                  </p>
                   <div className="w-full flex items-start justify-between gap-5">
                     <h1 className="font-medium text-2xl 2xl:text-3xl">
                       {listing.title}
@@ -209,7 +207,7 @@ const ListingDetails = () => {
                     Rs. {formatNumber(listing.price)}
                   </h3>
 
-                  <span className="inline-flex max-md:flex-col gap-4 items-center">
+                  <span className="inline-flex max-md:flex-col gap-4 md:items-center">
                     <span className="inline-flex items-center gap-1">
                       <Icon
                         icon={Building}
@@ -271,15 +269,102 @@ const ListingDetails = () => {
                   </div>
                 </div>
 
-                <Button
-                  placeholder="Book Now"
-                  classname="!mt-5 max-lg:w-full ml-auto"
-                />
+                {listing.status === "Available" &&
+                  listing.seller.id !== user.id && (
+                    <Button
+                      placeholder="Book Now"
+                      disabled={
+                        listing.status !== "Available" &&
+                        listing.seller.id === user.id
+                      }
+                      classname="!mt-5 max-lg:w-full ml-auto"
+                      onClick={() => setIsPaymentModalOpen(true)}
+                    />
+                  )}
               </div>
             </div>
           </div>
         </section>
       )}
+
+      {/* IMAGE MODAL */}
+      <Modal
+        isOpen={isImageModalOpen}
+        onRequestClose={() => setIsImageModalOpen(false)}
+        className="modal-bg relative"
+      >
+        <button
+          className="absolute right-5 top-5 z-30 bg-black/90 inline-flex items-center justify-center p-1 rounded-full"
+          onClick={() => setIsImageModalOpen(false)}
+        >
+          <X className="text-white" />
+        </button>
+
+        <div className="relative flex items-center justify-center h-screen w-full">
+          <img src={images && images[selectedImageModal]} />
+          <button
+            className="absolute left-5 top-1/2 z-20 bg-black/90 inline-flex items-center justify-center p-1 rounded-full disabled:hidden"
+            disabled={!selectedImageModal > 0}
+            onClick={() => setPreviousImage()}
+          >
+            <ChevronLeft className="text-white" />
+          </button>
+
+          <button
+            className="absolute right-5 top-1/2 z-20 bg-black/90 inline-flex items-center justify-center p-1 rounded-full disabled:hidden"
+            disabled={!(selectedImageModal < noOfImages - 1)}
+            onClick={() => setNextImage()}
+          >
+            <ChevronRight className="text-white" />
+          </button>
+        </div>
+      </Modal>
+
+      {/* Payment Modal */}
+      <Modal isOpen={isPaymentModalOpen} className="modal-bg">
+        <div className="modal-card">
+          <h2 className="modal-header">Booking Confirmation</h2>
+
+          <p className="modal-desc">
+            Are you sure you want to continue? You will be redirected to Khalti.
+          </p>
+
+          <h3 className="font-semibold">Booking Details</h3>
+
+          <div className="border rounded-xl p-4 flex gap-2 !mb-4">
+            <img
+              src={listing.thumbnail}
+              className="object-cover aspect-square h-20 rounded-xl"
+            />
+
+            <span>
+              <p className="font-semibold text-lg">{listing.title}</p>
+              <p className="modal-desc">{listing.location}</p>
+              <p className="font-medium">Rs. {formatNumber(listing.price)}</p>
+            </span>
+          </div>
+
+          <h3 className="font-semibold">Payment Details</h3>
+
+          <div className="inline-flex items-center justify-between w-full !mb-4 text-sm">
+            <p>10% of {formatNumber(listing.price)}</p>
+
+            <p className="font-semibold">
+              Rs. {formatNumber(listing.price * 0.1)}
+            </p>
+          </div>
+
+          <div className="modal-footer">
+            <button
+              className="btn-neutral"
+              onClick={() => setIsPaymentModalOpen(false)}
+            >
+              Cancel
+            </button>
+            <Button onClick={onBook}>Continue</Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 };

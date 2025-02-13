@@ -18,6 +18,8 @@ import Logo from "./components/Logo";
 import { Loader2 } from "lucide-react";
 import Profile from "./pages/Root/Profile";
 import Create from "./pages/Root/Create";
+import Payment from "./pages/Root/Payment";
+import Notifications from "./pages/Root/Notifications";
 
 function App() {
   const { user, isLoading } = useAuthContext();
@@ -52,8 +54,17 @@ function App() {
             path="/profile"
             element={!user ? <Navigate to="/login" /> : <Profile />}
           />
+          <Route
+            path="/notifications"
+            element={!user ? <Navigate to="/login" /> : <Notifications />}
+          />
+          <Route
+            path="/payment"
+            element={!user ? <Navigate to="/login" /> : <Payment />}
+          />
           <Route path="/aboutus" element={<About />} />
         </Route>
+
         <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
         <Route
           path="/signup"

@@ -10,10 +10,7 @@ const Button = ({
 }) => {
   return (
     <button
-      className={twMerge(
-        "flex items-center justify-center py-2 px-3 bg-primary rounded-lg text-white font-semibold hover:bg-primary/85 transition-colors disabled:opacity-70",
-        classname
-      )}
+      className={twMerge("btn-primary", classname)}
       type={type}
       onClick={onClick}
       disabled={disabled}

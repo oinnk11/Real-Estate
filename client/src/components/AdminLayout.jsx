@@ -5,10 +5,12 @@ import AdminTopBar from "./AdminTopBar";
 const AdminLayout = () => {
   return (
     <div className="flex">
-      <AdminNavbar />
-      <div className="flex-1 relative">
+      <span>
+        <AdminNavbar />
+      </span>
+      <div className="w-full relative z-0">
         <AdminTopBar />
-        <div className="px-6 py-6 flex-1">
+        <div className="px-6 py-6">
           <Outlet />
         </div>
       </div>

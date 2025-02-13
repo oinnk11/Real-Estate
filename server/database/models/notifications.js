@@ -40,7 +40,18 @@ const Notification = sequelize.define(
 );
 
 // Define the relationship between Notification and User (One-to-Many)
-Notification.belongsTo(User, { foreignKey: "userId", onDelete: "CASCADE" }); // A notification belongs to a user
+Notification.belongsTo(User, {
+  foreignKey: "userId",
+  onDelete: "CASCADE",
+  as: "user",
+}); // A notification belongs to a user
 User.hasMany(Notification, { foreignKey: "userId" }); // A user can have multiple notifications
+
+Notification.belongsTo(Listing, {
+  foreignKey: "listingId",
+  onDelete: "CASCADE",
+  as: "listing",
+}); // A notification belongs to a listing
+Listing.hasMany(Notification, { foreignKey: "listingId" }); // A listing can have multiple notifications
 
 export default Notification;

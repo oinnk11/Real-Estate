@@ -3,13 +3,20 @@ import Input from "../../components/Input";
 import Button from "../../components/Button";
 import { Building2, ChevronRight, House, Loader2, Search } from "lucide-react";
 import PropertyCard from "../../components/PropertyCard";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getTopViewedListings } from "../../hooks/useListings";
+import { toast } from "react-toastify";
 
 const Home = () => {
+  const navigate = useNavigate();
+
   const [topViewListings, setTopViewListings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Search related states
+  const [location, setLocation] = useState();
+  const [budget, setBudget] = useState();
 
   const fetchTopViewedListings = async () => {
     setIsLoading(true);
@@ -21,6 +28,23 @@ const Home = () => {
     }
 
     setIsLoading(false);
+  };
+
+  const handleSearch = () => {
+    if (!location && !budget) {
+      toast.error("Please provide either a location or budget.");
+      return;
+    }
+
+    if (budget <= 0) {
+      toast.error("Please provide a valid number.");
+      return;
+    }
+    const queryParams = new URLSearchParams({
+      location,
+      maxPrice: budget,
+    });
+    navigate(`/listings?${queryParams.toString()}`);
   };
 
   useEffect(() => {
@@ -53,17 +77,23 @@ const Home = () => {
             Search from our wide range of listings! 🔍
           </h1>
           <div className="flex flex-col md:flex-row items-center gap-4 w-full mt-5">
-            <Input width="100%" placeholder="Location" />
-            <Input width="100%" placeholder="Budget (Rs.)" />
-            <Button
-              classname="w-full"
-              placeholder={
-                <>
-                  <Search className="size-5" />
-                  <p className="ml-1">Search</p>
-                </>
-              }
+            <Input
+              width="100%"
+              placeholder="Location"
+              value={location}
+              onChange={(value) => setLocation(value)}
             />
+            <Input
+              width="100%"
+              placeholder="Budget (Rs.)"
+              type="number"
+              value={budget}
+              onChange={(value) => setBudget(value)}
+            />
+            <Button classname="w-full" onClick={handleSearch}>
+              <Search className="size-5" />
+              <p className="ml-1">Search</p>
+            </Button>
           </div>
         </div>
       </section>

@@ -1,17 +1,16 @@
 import Input from "../../components/Input";
 import Button from "../../components/Button";
-import { Loader2, Upload, X } from "lucide-react";
-import {
-  createListing,
-  getListingTypes,
-  getLocationAutoComplete,
-} from "../../hooks/useListings";
+import { Upload, X } from "lucide-react";
+import { createListing, getListingTypes } from "../../hooks/useListings";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
+import { MAX_NO_FILES } from "../../utils/constants";
+import { createImageUrl, validateFile } from "../../utils/image";
+import LocationAutoComplete from "../../components/LocationAutoComplete";
+import { useNavigate } from "react-router-dom";
 
 const Create = () => {
-  // Listing Types related states
-  const [listingTypes, setListingTypes] = useState([]);
+  const navigate = useNavigate();
 
   // Form related states
   const [title, setTitle] = useState("");
@@ -19,25 +18,25 @@ const Create = () => {
   const [price, setPrice] = useState();
   const [typeId, setTypeId] = useState();
   const [location, setLocation] = useState("");
+
   const [bedrooms, setBedrooms] = useState();
   const [bathrooms, setBathrooms] = useState();
   const [images, setImages] = useState([]);
 
-  // States related to debounce (delay) search locations
-  const [locationSearch, setLocationSearch] = useState("");
-  const [debouncedLocationSearch, setDebouncedLocationSearch] = useState("");
-
   // Image previews related state
   const [imagePreviews, setImagePreviews] = useState([]);
 
-  const [locations, setLocations] = useState([]);
-  const [isLocationLoading, setIsLocationLoading] = useState(false);
-  const [isLocationSelected, setIsLocationSelected] = useState(false);
+  // Listing Types related states
+  const [listingTypes, setListingTypes] = useState([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [reset, setReset] = useState(false);
+
+  // Handle input click through another button
   const imageInputRef = useRef();
 
+  // Reset the form fields
   const resetForm = () => {
     setTitle("");
     setDescription("");
@@ -48,50 +47,10 @@ const Create = () => {
     setLocation("");
     setImages([]);
     setImagePreviews([]);
-    setLocationSearch("");
-    setDebouncedLocationSearch("");
-    setIsLocationSelected(false);
-    setIsLocationLoading(false);
-    setLocations([]);
+    setReset((prev) => !prev);
   };
 
-  useEffect(() => {
-    if (isLocationSelected) return;
-
-    setIsLocationLoading(true);
-
-    const handler = setTimeout(() => {
-      setDebouncedLocationSearch(locationSearch);
-    }, 3000); // 3 seconds debounce
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [locationSearch]);
-
-  useEffect(() => {
-    if (!debouncedLocationSearch) {
-      setLocations([]);
-      setIsLocationLoading(false);
-      return;
-    }
-
-    const fetchLocationAutocomplete = async () => {
-      setIsLocationLoading(true);
-      const response = await getLocationAutoComplete(debouncedLocationSearch);
-
-      if (response.success) {
-        setLocations(response.data);
-      } else {
-        setLocations([]);
-      }
-
-      setIsLocationLoading(false);
-    };
-
-    fetchLocationAutocomplete();
-  }, [debouncedLocationSearch]);
-
+  // Get listing types
   const fetchListingTypes = async () => {
     const response = await getListingTypes();
 
@@ -100,46 +59,26 @@ const Create = () => {
     }
   };
 
-  useEffect(() => {
-    fetchListingTypes();
-  }, []);
-
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
-    const maxSize = 10 * 1024 * 1024;
-    const maxFiles = 10;
-
-    if (files.length > maxFiles || files.length + images.length > 10) {
-      toast.error("Maximum number of images is 10.");
+    if (files.length + images.length > MAX_NO_FILES) {
+      toast.error(`Maximum number of images is ${MAX_NO_FILES}`);
       return;
     }
 
-    const validFiles = files.filter((file) => {
-      if (!allowedTypes.includes(file.type)) {
-        toast.warn(`File type not allowed: ${file.name}`);
-        return false;
-      }
-      if (file.size > maxSize) {
-        toast.warn(`File too large: ${file.name}`);
-        return false;
-      }
-      return true;
-    });
+    const validFiles = files.filter((file) => validateFile(file));
 
     // Generate preview URLs for valid files
-    const previewUrls = validFiles.map((file) => URL.createObjectURL(file));
+    const previewUrls = validFiles.map((file) => createImageUrl(file));
 
+    // Adding new files and urls to same array
     setImages((prevImages) => [...prevImages, ...validFiles]);
     setImagePreviews((prevPreviews) => [...prevPreviews, ...previewUrls]);
   };
 
-  const onCreate = async () => {
-    setIsSubmitting(true);
-
-    const formData = new FormData();
-
+  // Add all fields to form data
+  const createFormData = (formData) => {
     // Append fields to FormData
     formData.append("title", title);
     formData.append("description", description);
@@ -153,18 +92,33 @@ const Create = () => {
     images.forEach((image) => {
       formData.append("images", image); // Add each image file
     });
+  };
+
+  const onCreate = async () => {
+    setIsSubmitting(true);
+
+    const formData = new FormData();
+
+    createFormData(formData);
 
     const response = await createListing(formData);
 
     if (response.success) {
       toast.success(response.data.message);
       resetForm();
+      const newListing = response.data.listing;
+
+      navigate(`/listing/${newListing.id}`);
     } else {
       toast.error(response.error);
     }
 
     setIsSubmitting(false);
   };
+
+  useEffect(() => {
+    fetchListingTypes();
+  }, []);
 
   return (
     <form
@@ -200,42 +154,9 @@ const Create = () => {
                   value={price}
                   onChange={(e) => setPrice(e)}
                 />
-                <div className="relative">
-                  <Input
-                    label="Location"
-                    placeholder="Enter property location"
-                    value={locationSearch}
-                    onChange={(e) => {
-                      setLocationSearch(e);
-                      setIsLocationSelected(false);
-                    }}
-                    classname="rounded-none"
-                  />
-                  {(isLocationLoading || locations.length > 0) && (
-                    <div className="w-full absolute bg-white border rounded-b-xl p-2 max-h-[180px] overflow-y-auto">
-                      {isLocationLoading ? (
-                        <Loader2 className="animate-spin duration-1000 text-primary mx-auto" />
-                      ) : (
-                        locations.map((suggestion, index) => (
-                          <button
-                            key={index + suggestion.description}
-                            className="w-full text-left p-2 hover:bg-gray-100 cursor-pointer rounded-xl"
-                            type="button"
-                            onClick={() => {
-                              setLocation(suggestion.description);
-                              setLocationSearch(suggestion.description);
-                              setIsLocationLoading(false);
-                              setIsLocationSelected(true);
-                              setLocations([]);
-                            }}
-                          >
-                            {suggestion.description}
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
+
+                <LocationAutoComplete setLocation={setLocation} reset={reset} />
+
                 <Input
                   label="Bedrooms"
                   placeholder="Enter no. of bedrooms"
@@ -303,7 +224,6 @@ const Create = () => {
             </p>
 
             <div className="mt-4 space-y-2">
-              {/* <div className="aspect-square w-full border rounded-xl"></div> */}
               <div className="grid grid-cols-3 gap-2">
                 {imagePreviews.map((preview, index) => (
                   <div key={preview} className="relative">
@@ -339,13 +259,13 @@ const Create = () => {
                   onChange={(e) => handleImageUpload(e)}
                   className="hidden"
                   ref={imageInputRef}
-                  disabled={images.length >= 10}
+                  disabled={images.length >= MAX_NO_FILES}
                 />
                 <button
                   className="aspect-square w-full border rounded-xl flex items-center justify-center bg-black/20 disabled:hidden"
                   type="button"
                   onClick={() => imageInputRef.current.click()}
-                  disabled={images.length >= 10}
+                  disabled={images.length >= MAX_NO_FILES}
                 >
                   <span className="bg-black/80 rounded-full p-2">
                     <Upload className="text-white size-5" />

@@ -1,4 +1,4 @@
-import { get, post } from "../utils/api";
+import { del, get, patch, post } from "../utils/api";
 
 export const createListing = async (formData) => {
   try {
@@ -26,7 +26,7 @@ export const getListingById = async (id) => {
   try {
     const data = await get("/listing", { id });
 
-    return { data, success: true };
+    return { data: data[0], success: true };
   } catch (error) {
     return { error: error.message, success: false };
   }
@@ -66,6 +66,28 @@ export const handleListingClick = async (id) => {
   if (!id) return;
   try {
     const data = await post(`/listing/view/${id}`);
+
+    return { data, success: true };
+  } catch (error) {
+    return { error: error.message, success: false };
+  }
+};
+
+export const updateListing = async (formData) => {
+  try {
+    const data = await patch("/listing/edit", formData, {
+      "Content-Type": "multipart/form-data",
+    });
+
+    return { data, success: true };
+  } catch (error) {
+    return { error: error.message, success: false };
+  }
+};
+
+export const deleteListing = async (id) => {
+  try {
+    const data = await del(`/listing/${id}`);
 
     return { data, success: true };
   } catch (error) {
