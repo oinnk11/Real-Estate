@@ -1,6 +1,7 @@
 import Booking from "../database/models/bookings.js";
 import Listing from "../database/models/listings.js";
 import ListingType from "../database/models/listingTypes.js";
+import Notification from "../database/models/notifications.js";
 import User from "../database/models/users.js";
 import { handleError } from "../utils/handleError.js";
 
@@ -127,11 +128,70 @@ export const createBooking = async (req, res) => {
     if (isBooked)
       return res.status(400).json({ message: "Listing is already booked." });
 
-    const booking = await Booking.create({
+    const createdBooking = await Booking.create({
       userId,
-      listing,
+      listingId,
       amount,
       status: "Completed",
+    });
+
+    const booking = await Booking.findByPk(createdBooking.id, {
+      include: [
+        {
+          model: User, // Include the user who made the booking
+          as: "buyer", // Alias
+          attributes: ["id", "name", "email"], // Specify the attributes to fetch
+        },
+        {
+          model: Listing,
+          as: "listing",
+          attributes: [
+            "id",
+            "title",
+            "price",
+            "description",
+            "listingTypeId",
+            "location",
+            "status",
+            "userId",
+            "thumbnail",
+            "images",
+            "bathrooms",
+            "bedrooms",
+          ],
+          include: [
+            {
+              model: User, // Include the user who posted the listing
+              as: "seller",
+              attributes: ["id", "name", "email"], // Specify the attributes to fetch
+            },
+            {
+              model: ListingType,
+              as: "type",
+              attributes: ["id", "name"],
+            },
+          ],
+        },
+      ],
+    });
+
+    await Listing.update(
+      { status: "Booked" },
+      { where: { id: booking.listingId } }
+    );
+
+    const buyerMessage = `Your booking for listing #${booking.listingId} has been completed.`;
+    const sellerMessage = `Your listing #${booking.listingId} has been booked.`;
+
+    await Notification.create({
+      message: buyerMessage,
+      userId: booking.buyer.id,
+      listingId: booking.listingId,
+    });
+    await Notification.create({
+      message: sellerMessage,
+      userId: booking.listing.userId,
+      listingId: booking.listingId,
     });
 
     return res
