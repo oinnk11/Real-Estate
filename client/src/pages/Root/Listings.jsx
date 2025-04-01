@@ -1,25 +1,24 @@
 import PropertyCard from "../../components/PropertyCard";
 import Input from "../../components/Input";
-import Button from "../../components/Button";
 import { Loader2, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { getListings, getListingTypes } from "../../hooks/useListings";
+import { useSearchParams } from "react-router-dom";
 
 const Listings = () => {
-  const [filters, setFilters] = useState({
-    type: "",
-    minPrice: "",
-    maxPrice: "",
-    location: "",
-  });
+  const [searchParams, setSearchParams] = useSearchParams(); // Search params
 
-  const handleFilterChange = (value, name) => {
-    setFilters((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  // Initial filters
+  const initialFilters = {
+    type: searchParams.get("type") || "",
+    minPrice: searchParams.get("minPrice") || "",
+    maxPrice: searchParams.get("maxPrice") || "",
+    propertyType: searchParams.get("propertyType") || "",
+    location: searchParams.get("location") || "",
   };
+
+  const [filters, setFilters] = useState(initialFilters);
 
   const [isFilterOpen, setIsFilterOpen] = useState(true);
 
@@ -27,6 +26,19 @@ const Listings = () => {
   const [listingTypes, setListingTypes] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleFilterChange = (value, name) => {
+    // Change filter state
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Change search params
+    const newSearchParams = new URLSearchParams(filters);
+    newSearchParams.set(name, value);
+    setSearchParams(newSearchParams);
+  };
 
   const fetchListings = async (newFilters) => {
     const response = await getListings(newFilters || filters);
@@ -152,16 +164,19 @@ const Listings = () => {
             />
 
             <span className="inline-flex flex-col md:flex-row items-center gap-2 w-full">
-              <Button
+              <button
                 placeholder="Clear"
-                classname="bg-white text-primary border hover:bg-primary/10 w-full"
+                className="btn-neutral flex-1 w-full"
                 onClick={resetFilters}
-              />
-              <Button
-                classname=" w-full"
-                placeholder="Filter"
+              >
+                Clear
+              </button>
+              <button
+                className="btn-primary flex-1 w-full"
                 onClick={applyFilters}
-              />
+              >
+                Filter
+              </button>
             </span>
           </div>
         </div>

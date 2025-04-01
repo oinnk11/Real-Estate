@@ -7,14 +7,19 @@ import cookieParser from "cookie-parser";
 
 // IMPORT THE MODELS
 import User from "./database/models/users.js";
+import ListingType from "./database/models/listingTypes.js";
 import Listing from "./database/models/listings.js";
 import Booking from "./database/models/bookings.js";
-import Notification from "./database/models/Notifications.js";
+import Notification from "./database/models/notifications.js";
 
 // IMPORT THE ROUTES
 import authRoute from "./routes/authRoute.js";
 import userRoute from "./routes/userRoute.js";
 import listingRoute from "./routes/listingRoute.js";
+import adminRoute from "./routes/adminRoute.js";
+import paymentRoute from "./routes/paymentRoute.js";
+import bookingRoute from "./routes/bookingRoute.js";
+import notificationRoute from "./routes/notificationRoute.js";
 
 dotenv.config();
 
@@ -43,6 +48,10 @@ const PORT = process.env.PORT;
     app.use("/api/auth", authRoute);
     app.use("/api/user", userRoute);
     app.use("/api/listing", listingRoute);
+    app.use("/api/admin", adminRoute);
+    app.use("/api/payment", paymentRoute);
+    app.use("/api/booking", bookingRoute);
+    app.use("/api/notification", notificationRoute);
 
     app.listen(PORT, () => {
       console.log(`App running on http://localhost:${PORT}`);

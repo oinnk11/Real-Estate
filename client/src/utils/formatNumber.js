@@ -1,5 +1,8 @@
 const formatNumber = (number) => {
-  const formattedNumber = new Intl.NumberFormat("ne-NP").format(number);
+  if (number <= 0) {
+    return 0;
+  }
+  const formattedNumber = new Intl.NumberFormat("en-IN").format(number);
 
   return formattedNumber;
 };

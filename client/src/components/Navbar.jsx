@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Button from "./Button";
 import useAuthContext from "../hooks/useAuthContext";
 import profilePlaceholder from "../assets/profilePlaceholder.png";
-import { Plus } from "lucide-react";
+import { Bell, Plus } from "lucide-react";
 
 const Navbar = () => {
   const { user } = useAuthContext();
@@ -29,12 +29,15 @@ const Navbar = () => {
 
         {user ? (
           <div className="inline-flex items-center gap-2">
-            <Link
-              to="/create"
-              className="inline-flex items-center border p-2 gap-1 rounded-lg hover:bg-black/10 transition-colors duration-150"
-            >
+            <Link to="/create" className="btn-neutral">
               <Plus className="size-4" />
               <p className="text-sm font-medium">Create</p>
+            </Link>
+            <Link
+              to="/notifications"
+              className="btn-neutral !rounded-full aspect-square"
+            >
+              <Bell className="size-5" />
             </Link>
             <Link to="/profile">
               <div className="rounded-full size-10 overflow-hidden">

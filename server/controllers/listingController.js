@@ -4,6 +4,7 @@ import ListingType from "../database/models/listingTypes.js";
 import { handleError } from "../utils/handleError.js";
 import User from "../database/models/users.js";
 import { Op } from "sequelize";
+import Booking from "../database/models/bookings.js";
 
 export const getListings = async (req, res) => {
   try {
@@ -37,8 +38,57 @@ export const getListings = async (req, res) => {
           as: "type",
           attributes: ["id", "name"],
         },
+        {
+          model: Booking,
+          as: "booking",
+          attributes: ["id", "status", "createdAt"],
+          required: false,
+          where: {
+            status: "Completed", // Only include bookings with status 'Completed'
+          },
+          include: [
+            {
+              model: User,
+              as: "buyer",
+              attributes: ["id", "name", "phone", "email"],
+            },
+          ],
+        },
       ],
     });
+
+    const count = await Listing.count({
+      where,
+      include: [
+        {
+          model: User,
+          as: "seller",
+          attributes: ["id", "name", "phone", "email"], // Customize fields
+        },
+        {
+          model: ListingType,
+          as: "type",
+          attributes: ["id", "name"],
+        },
+        {
+          model: Booking,
+          as: "booking",
+          attributes: ["id", "status", "createdAt"],
+          required: false,
+          where: {
+            status: "Completed", // Only include bookings with status 'Completed'
+          },
+          include: [
+            {
+              model: User,
+              as: "buyer",
+              attributes: ["id", "name", "phone", "email"],
+            },
+          ],
+        },
+      ],
+    });
+    console.log("🚀 ~ count:", count);
 
     if (!listings)
       return res.status(404).json({ message: "Listing not found." });
@@ -73,6 +123,11 @@ export const createListing = async (req, res) => {
 
     // Handle image uploads
     const imageUrls = req.files.map((file) => file.path); // Cloudinary URLs from upload middleware
+
+    if (imageUrls.length < 1)
+      return res
+        .status(400)
+        .json({ message: "At least one image is required." });
 
     const listing = await Listing.create({
       title,
@@ -143,7 +198,6 @@ export const updateListing = async (req, res) => {
       bathrooms,
       listingTypeId,
       images,
-      thumbnail,
     } = req.body;
 
     if (!listingId)
@@ -177,9 +231,14 @@ export const updateListing = async (req, res) => {
       return res.status(401).json({ message: "Listing can't be edited." });
 
     const newImageUrls = req.files?.map((file) => file.path);
+    console.log("🚀 ~ listingController.js:234 ~ newImageUrls:", newImageUrls);
 
-    if (newImageUrls?.length > 0) {
-      images = images.concat(newImageUrls);
+    let newImages = [];
+
+    if (Array.isArray(images)) {
+      newImages = images.concat(newImageUrls || []);
+    } else {
+      newImages = [images, ...(newImageUrls || [])].filter(Boolean);
     }
 
     // Update the listing
@@ -192,8 +251,8 @@ export const updateListing = async (req, res) => {
         bedrooms,
         bathrooms,
         listingTypeId,
-        images,
-        thumbnail,
+        images: newImages.length > 0 ? newImages : images,
+        thumbnail: newImages.length > 0 ? newImages[0] : images[0],
       },
       { where: { id: listingId }, returning: true }
     );
@@ -224,6 +283,11 @@ export const deleteListing = async (req, res) => {
 
     if (listing.userId !== userId)
       return res.status(401).json({ message: "Listing can't be deleted." });
+
+    if (listing.status === "Booked")
+      return res
+        .status(400)
+        .json({ message: "Can't delete a booked Listing." });
 
     await Listing.destroy({ where: { id: listing.id } });
 

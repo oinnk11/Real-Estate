@@ -1,29 +1,57 @@
 import { ArrowLeftRight, Building, CreditCard, Users } from "lucide-react";
 import formatNumber from "../../utils/formatNumber";
+import { useEffect, useState } from "react";
+import { getDashboardData } from "../../hooks/useAdmin";
+import { twMerge } from "tailwind-merge";
 
 const Dashboard = () => {
+  const [userCount, setUserCount] = useState(0);
+  const [listingCount, setListingCount] = useState(0);
+  const [bookingCount, setBookingCount] = useState(0);
+  const [transactions, setTransactions] = useState(0);
+
+  const [recentBookings, setRecentBookings] = useState([]);
+
   const countCard = [
     {
       title: "Users",
-      count: 700,
+      count: userCount,
       icon: Users,
     },
     {
       title: "Listings",
-      count: 500,
+      count: listingCount,
       icon: Building,
     },
     {
       title: "Bookings",
-      count: 300,
+      count: bookingCount,
       icon: CreditCard,
     },
     {
       title: "Transactions (This Month)",
-      count: 300,
+      count: `Rs. ${formatNumber(transactions)}`,
       icon: ArrowLeftRight,
     },
   ];
+
+  const fetchDashboardData = async () => {
+    const response = await getDashboardData();
+
+    if (response.success) {
+      const data = response.data;
+
+      setUserCount(data.userCount);
+      setListingCount(data.listingCount);
+      setBookingCount(data.bookingCount);
+      setTransactions(data.transactions);
+      setRecentBookings(data.recentBookings);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -38,9 +66,7 @@ const Dashboard = () => {
               <item.icon className="text-primary size-8" />
             </div>
             <span>
-              <p className="font-semibold text-2xl">
-                {formatNumber(item.count)}
-              </p>
+              <p className="font-semibold text-xl">{item.count}</p>
               <p className="text-sm text-muted">{item.title}</p>
             </span>
           </div>
@@ -50,27 +76,58 @@ const Dashboard = () => {
       <div className="space-y-4">
         <h1 className="font-semibold text-lg">Recent Bookings</h1>
 
-        <div className="w-full rounded-xl border overflow-hidden">
-          <table className="table-auto w-full">
+        <div className="rounded-xl border overflow-x-auto">
+          <table className="w-full text-sm overflow-y-auto">
             <thead className="text-left border-b bg-sky-50">
               <tr>
+                <th className="px-6 py-3 w-20"></th>
                 <th className="px-6 py-3">ID</th>
-                <th className="px-6 py-3">Listing ID</th>
-                <th className="px-6 py-3">Title</th>
                 <th className="px-6 py-3">Booked By</th>
+                <th className="px-6 py-3">Sold By</th>
                 <th className="px-6 py-3">Price</th>
+                <th className="px-6 py-3">Commission</th>
+                <th className="px-6 py-3">Payment</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="px-6 py-3">1</td>
-                <td className="px-6 py-3">1</td>
-                <td className="px-6 py-3">This is a title</td>
-                <td className="px-6 py-3">Peter Parker</td>
-                <td className="px-6 py-3">30000000</td>
-              </tr>
+              {recentBookings.map((booking) => (
+                <tr key={booking.id}>
+                  <td className="py-3">
+                    <img
+                      src={booking.listing.thumbnail}
+                      className="aspect-square h-12 rounded-xl object-cover mx-auto"
+                    />
+                  </td>
+                  <td className="px-6 py-3">{booking.id}</td>
+                  <td className="px-6 py-3">{booking.buyer.name}</td>
+                  <td className="px-6 py-3">{booking.listing.seller.name}</td>
+
+                  <td className="px-6 py-3">
+                    Rs. {formatNumber(booking.listing.price)}
+                  </td>
+                  <td className="px-6 py-3">
+                    Rs. {formatNumber(booking.amount)}
+                  </td>
+                  <td
+                    className={twMerge(
+                      "px-6 py-3 font-semibold",
+                      booking.status === "Completed"
+                        ? "text-green-500"
+                        : "text-danger"
+                    )}
+                  >
+                    {booking.status}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
+
+          {recentBookings.length < 1 && (
+            <div className="w-full py-6 text-center">
+              <h1 className="font-semibold">No recent transactions.</h1>
+            </div>
+          )}
         </div>
       </div>
     </div>

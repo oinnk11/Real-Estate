@@ -49,9 +49,9 @@ export const post = async (url, data = {}, headers = {}) => {
 };
 
 // Function to handle PATCH requests
-export const patch = async (url, data = {}) => {
+export const patch = async (url, data = {}, headers) => {
   try {
-    const response = await api.patch(url, data);
+    const response = await api.patch(url, data, { headers });
     return response.data;
   } catch (error) {
     console.error("API error:", error);

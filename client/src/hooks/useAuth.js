@@ -47,3 +47,16 @@ export const getUser = async () => {
     return { error: error.message, success: false };
   }
 };
+
+export const adminLogin = async ({ email, password }) => {
+  try {
+    const data = await post("/auth/admin/login", {
+      email,
+      password,
+    });
+
+    return { data, success: true };
+  } catch (error) {
+    return { error: error.message, success: false };
+  }
+};

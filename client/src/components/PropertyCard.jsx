@@ -1,11 +1,21 @@
 import { Bed, MapPin, Toilet } from "lucide-react";
 import formatNumber from "../utils/formatNumber";
+import { handleListingClick } from "../hooks/useListings";
 
 const PropertyCard = ({ listing }) => {
   const { id, title, thumbnail, location, price, bedrooms, bathrooms, status } =
     listing;
+
+  const increaseListingView = async () => {
+    await handleListingClick(id);
+  };
+
   return (
-    <a href={`/listing/${id}`} className="relative">
+    <a
+      href={`/listing/${id}`}
+      className="relative"
+      onClick={increaseListingView}
+    >
       {status === "Booked" ? (
         <span className="inline-flex items-center gap-1 absolute top-5 right-5 bg-red-100 py-1 px-2 rounded-lg border border-red-500 text-red-500 font-semibold text-xs">
           <div className="size-2 rounded-full bg-red-500"></div>
