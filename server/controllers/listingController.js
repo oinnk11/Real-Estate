@@ -88,7 +88,6 @@ export const getListings = async (req, res) => {
         },
       ],
     });
-    console.log("🚀 ~ count:", count);
 
     if (!listings)
       return res.status(404).json({ message: "Listing not found." });

@@ -8,6 +8,14 @@
   font-family: "Work Sans", serif;
 }
 
+.h-no-nav {
+  @apply h-[calc(100vh-80px)];
+}
+
+.min-h-no-nav {
+  @apply min-h-[calc(100vh-80px)];
+}
+
 .fluid {
   @apply px-4 md:px-12 lg:px-28 xl:px-40 2xl:px-52;
 }
@@ -50,4 +58,16 @@
 
 .select {
   @apply border rounded-lg bg-white p-2 text-sm outline-none;
+}
+
+.dropdown-menu-item {
+  @apply w-full flex hover:bg-black/10 transition-colors duration-200 rounded-md gap-2 items-center p-2 text-sm font-medium;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }
