@@ -1,7 +1,7 @@
 import { ArrowLeft, Loader2, Send } from "lucide-react";
 import AccountContainer from "../../components/AccountContainer";
 import { Link, useParams } from "react-router-dom";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Input from "../../components/Input";
 import socket from "../../utils/socket";
 import {
@@ -32,9 +32,10 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
 
+  const [isSending, setIsSending] = useState(false);
+
   const typingTimeoutRef = useRef(null);
   const [isTyping, setIsTyping] = useState(false);
-  const [unseenMessage, setUnseenMessage] = useState(false);
 
   const typingIndicatorRef = useRef(null);
 
@@ -60,7 +61,7 @@ const Chat = () => {
     }, 2000);
   };
 
-  const fetchChat = async () => {
+  const fetchChat = useCallback(async () => {
     const response = await getChatById(chatId);
 
     if (response.success) {
@@ -70,28 +71,34 @@ const Chat = () => {
         currentUserId === chatData.user1.id ? chatData.user2 : chatData.user1;
       setChatUser(otherUser);
     }
-  };
+  }, [chatId, currentUser.id]);
 
   const onSendMessage = async () => {
+    setIsSending(true);
+
     const response = await sendMessage(chatId, message, chatUser.id);
 
     if (response.success) {
       setMessage("");
       socket.emit("stopTyping", { userId: chatUser.id });
+      scorllToEnd();
     } else {
       toast.error(response.error);
     }
+
+    setIsSending(false);
   };
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     setMessagesLoading(true);
 
     const response = await getMessagesByChat(chatId);
 
     if (response.success) {
-      setMessages(response.data);
+      const newMessages = response.data;
+      setMessages(newMessages);
 
-      const unseenMessages = messages.filter(
+      const unseenMessages = newMessages.filter(
         (msg) => !msg.isSeen && msg.userId !== currentUser.id
       );
 
@@ -103,30 +110,41 @@ const Chat = () => {
     }
 
     setMessagesLoading(false);
-  };
+  }, [chatId, currentUser.id]);
 
-  // Chat Events Handler
-  useEffect(() => {
-    const handleMessageSeen = ({ message }) => {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === message.id ? { ...msg, isSeen: true } : msg
-        )
-      );
-    };
-
-    const handleReceiveMessage = async (newMessage) => {
+  const handleReceiveMessage = useCallback(
+    async (newMessage) => {
       setMessages((prev) => [...prev, newMessage]);
 
       if (newMessage.userId !== currentUser.id) {
         await markMessageAsSeen(chatId);
       }
-    };
+    },
+    [chatId, currentUser.id]
+  );
 
-    const handleTyping = () => setIsTyping(true);
+  const handleMessageSeen = useCallback(({ message }) => {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === message.id ? { ...msg, isSeen: true } : msg
+      )
+    );
+  }, []);
 
-    const handleStopTyping = () => setIsTyping(false);
+  const handleTyping = useCallback(() => setIsTyping(true), []);
 
+  const handleStopTyping = useCallback(() => setIsTyping(false), []);
+
+  // Chat Change Handler
+  useEffect(() => {
+    if (!chatId) return;
+
+    fetchChat(); // fetch chat data
+    fetchMessages(); // fetch all messages
+  }, [chatId, fetchChat, fetchMessages]);
+
+  // Chat Events Handler
+  useEffect(() => {
     socket.on("messageSeen", handleMessageSeen);
     socket.on("receiveMessage", handleReceiveMessage);
     socket.on("typing", handleTyping);
@@ -137,30 +155,26 @@ const Chat = () => {
       socket.off("typing", handleTyping);
       socket.off("stopTyping", handleStopTyping);
     };
-  }, []);
-
-  // Chat Change Handler
-  useEffect(() => {
-    if (!chatId) return;
-    const loadChatData = async () => {
-      await fetchChat();
-      await fetchMessages();
-    };
-
-    loadChatData();
-  }, [chatId]);
+  }, [
+    chatId,
+    currentUser.id,
+    handleReceiveMessage,
+    handleMessageSeen,
+    handleTyping,
+    handleStopTyping,
+  ]);
 
   // Scroll To Bottom Handler
   useEffect(() => {
-    if (!messagesLoading || isTyping) {
+    if (!messagesLoading) {
       setTimeout(() => {
         scorllToEnd();
       }, 0);
     }
-  }, [chatId, messagesLoading]);
+  }, [chatId, messagesLoading, messages]);
 
   useEffect(() => {
-    if (typingIndicatorRef.current) {
+    if (typingIndicatorRef.current && isTyping) {
       const distanceFromBottom =
         window.innerHeight -
         typingIndicatorRef.current.getBoundingClientRect().bottom;
@@ -236,6 +250,8 @@ const Chat = () => {
 
       <form
         onSubmit={(e) => {
+          if (isSending) return;
+
           e.preventDefault();
           socket.emit("sendMessage", { chatId, message });
           onSendMessage();
@@ -252,7 +268,7 @@ const Chat = () => {
         />
         <button
           className="btn-neutral !rounded-full aspect-square !p-2"
-          disabled={!!!message.trim()}
+          disabled={!message.trim() || isSending}
         >
           <Send className="size-5 text-primary" />
         </button>

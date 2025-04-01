@@ -1,10 +1,11 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import socket from "../utils/socket";
 import useAuthContext from "../hooks/useAuthContext";
 import { toast } from "react-toastify";
+import Chatbot from "./Chatbot";
 
 const RootLayout = () => {
   const location = useLocation();
@@ -20,8 +21,8 @@ const RootLayout = () => {
     }
   }, [user]);
 
-  useEffect(() => {
-    const handleReceiveMessageNotification = (message) => {
+  const handleReceiveMessageNotification = useCallback(
+    (message) => {
       if (!isInbox)
         toast(
           <div>
@@ -35,20 +36,24 @@ const RootLayout = () => {
             },
           }
         );
-    };
+    },
+    [isInbox, navigate]
+  );
 
+  useEffect(() => {
     socket.on("receiveMessage", handleReceiveMessageNotification);
 
     return () => {
       socket.off("receiveMessage", handleReceiveMessageNotification);
     };
-  }, [isInbox]);
+  }, [isInbox, handleReceiveMessageNotification]);
 
   return (
     <>
       <Navbar />
       <Outlet />
       {!isInbox && <Footer />}
+      <Chatbot />
     </>
   );
 };
