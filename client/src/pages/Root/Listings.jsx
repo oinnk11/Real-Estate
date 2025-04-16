@@ -87,7 +87,7 @@ const Listings = () => {
     <section className="fluid py-12">
       <h1 className="font-bold text-2xl">Property Listings</h1>
 
-      <div className="w-full flex flex-col lg:flex-row gap-6 py-5">
+      <div className="w-full flex flex-col lg:flex-row gap-6 py-5 h-full min-h-no-nav">
         {/* FILTERS */}
         <div className="w-full lg:w-[300px] 2xl:w-[400px] pb-5 max-md:border-b lg:pr-5 lg:border-r">
           <span className="inline-flex items-center justify-between w-full mb-2">

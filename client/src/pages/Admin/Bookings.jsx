@@ -15,6 +15,7 @@ const Bookings = () => {
   const [rows, setRows] = useState(5);
 
   const [bookings, setBookings] = useState([]);
+  console.log("🚀 ~ Bookings.jsx:18 ~ bookings:", bookings);
 
   const totalPages = Math.ceil(bookings.length / rows);
   const startIndex = (currentPage - 1) * rows;
@@ -145,15 +146,15 @@ const Bookings = () => {
               <tr key={booking.id + booking.title}>
                 <td className="py-3">
                   <img
-                    src={booking.listing.thumbnail}
+                    src={booking.listing?.thumbnail}
                     className="aspect-square h-12 rounded-xl object-cover mx-auto"
                   />
                 </td>
                 <td className="px-6 py-3">{booking.id}</td>
                 <td className="px-6 py-3">{booking.buyer.name}</td>
-                <td className="px-6 py-3">{booking.listing.seller.name}</td>
+                <td className="px-6 py-3">{booking.listing?.seller.name}</td>
                 <td className="px-6 py-3">
-                  Rs. {formatNumber(booking.listing.price)}
+                  Rs. {formatNumber(booking.listing?.price)}
                 </td>
                 <td className="px-6 py-3">
                   Rs. {formatNumber(booking.amount)}

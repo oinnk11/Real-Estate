@@ -10,6 +10,8 @@ import User from "./database/models/users.js";
 import ListingType from "./database/models/listingTypes.js";
 import Listing from "./database/models/listings.js";
 import Booking from "./database/models/bookings.js";
+import Chat from "./database/models/chats.js";
+import Message from "./database/models/messages.js";
 import Notification from "./database/models/notifications.js";
 
 // IMPORT THE ROUTES
@@ -20,6 +22,11 @@ import adminRoute from "./routes/adminRoute.js";
 import paymentRoute from "./routes/paymentRoute.js";
 import bookingRoute from "./routes/bookingRoute.js";
 import notificationRoute from "./routes/notificationRoute.js";
+import chatRoute from "./routes/chatRoute.js";
+import messageRoute from "./routes/messageRoute.js";
+import { authenticateToken } from "./middleware/authenticateToken.js";
+import http from "http";
+import { initSocket } from "./utils/socket.js";
 
 dotenv.config();
 
@@ -52,8 +59,14 @@ const PORT = process.env.PORT;
     app.use("/api/payment", paymentRoute);
     app.use("/api/booking", bookingRoute);
     app.use("/api/notification", notificationRoute);
+    app.use("/api/chat", authenticateToken, chatRoute);
+    app.use("/api/message", authenticateToken, messageRoute);
 
-    app.listen(PORT, () => {
+    const server = http.createServer(app);
+
+    initSocket(server);
+
+    server.listen(PORT, () => {
       console.log(`App running on http://localhost:${PORT}`);
     });
   } catch (error) {

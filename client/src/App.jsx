@@ -7,7 +7,9 @@ import About from "./pages/Root/About";
 import Listings from "./pages/Root/Listings";
 import AdminListings from "./pages/Admin/Listings";
 import ListingDetails from "./pages/Root/ListingDetails";
+import Chat from "./pages/Root/Chat";
 import AdminLayout from "./components/AdminLayout";
+import InboxLayout from "./components/InboxLayout";
 import Dashboard from "./pages/Admin/Dashboard";
 import AdminLogin from "./pages/Admin/AdminLogin";
 import Settings from "./pages/Admin/Settings";
@@ -20,6 +22,7 @@ import Profile from "./pages/Root/Profile";
 import Create from "./pages/Root/Create";
 import Payment from "./pages/Root/Payment";
 import Notifications from "./pages/Root/Notifications";
+import Inbox from "./pages/Root/Inbox";
 
 function App() {
   const { user, isLoading } = useAuthContext();
@@ -50,6 +53,13 @@ function App() {
             path="/create"
             element={!user ? <Navigate to="/login" /> : <Create />}
           />
+          <Route
+            path="/inbox"
+            element={!user ? <Navigate to="/login" /> : <InboxLayout />}
+          >
+            <Route index element={<Inbox />} />
+            <Route path="/inbox/chat/:id" element={<Chat />} />
+          </Route>
           <Route
             path="/profile"
             element={!user ? <Navigate to="/login" /> : <Profile />}

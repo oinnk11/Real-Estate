@@ -41,7 +41,7 @@ const Notifications = () => {
     fetchNotifications();
   }, []);
   return (
-    <div className="fluid py-12 min-h-[calc(100vh-50vh)] md:max-w-[80%] mx-auto">
+    <div className="fluid py-12 h-no-nav md:max-w-[80%] mx-auto">
       <h1 className="font-semibold text-2xl mb-5">Notifications</h1>
 
       <div className="space-y-2">

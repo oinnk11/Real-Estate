@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Icon from "../../components/Icon";
 import {
   Bed,
@@ -8,6 +8,7 @@ import {
   Eye,
   Loader2,
   MapPin,
+  Send,
   Toilet,
   X,
 } from "lucide-react";
@@ -21,9 +22,11 @@ import placeholder from "../../assets/profilePlaceholder.png";
 import useAuthContext from "../../hooks/useAuthContext";
 import { initiatePayment } from "../../hooks/usePayment";
 import { toast } from "react-toastify";
+import { createChat } from "../../hooks/useChat";
 
 const ListingDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const { user } = useAuthContext();
 
@@ -94,6 +97,20 @@ const ListingDetails = () => {
 
     if (response.success) {
       redirectToPayment(response.data.paymentUrl);
+    } else {
+      toast.error(response.error);
+    }
+  };
+
+  const onMessage = async () => {
+    const response = await createChat({
+      initiatorId: user.id,
+      receiverId: listing.seller.id,
+    });
+    console.log("🚀 ~ ListingDetails.jsx:110 ~ response:", response);
+
+    if (response.success) {
+      navigate(`/inbox/chat/${response.data.id}`);
     } else {
       toast.error(response.error);
     }
@@ -252,20 +269,26 @@ const ListingDetails = () => {
                 <div className="!mt-6 space-y-4 pb-5 border-b">
                   <h1 className="font-semibold text-lg">Seller Details</h1>
 
-                  <div className="inline-flex items-center gap-3 w-full">
-                    <img
-                      src={placeholder}
-                      className="aspect-square h-16 rounded-full"
-                    />
+                  <div className="flex items-center gap-4 justify-between">
+                    <div className="inline-flex items-center gap-3 w-full">
+                      <img
+                        src={placeholder}
+                        className="aspect-square h-16 rounded-full"
+                      />
 
-                    <span>
-                      <p className="font-medium text-lg">
-                        {listing.seller.name}
-                      </p>
-                      <p className="text-muted text-sm">
-                        {listing.seller.phone}
-                      </p>
-                    </span>
+                      <span>
+                        <p className="font-medium text-lg">
+                          {listing.seller.name}
+                        </p>
+                        <p className="text-muted text-sm">
+                          {listing.seller.phone}
+                        </p>
+                      </span>
+                    </div>
+
+                    <Button onClick={onMessage}>
+                      <Send className="size-4" /> Message
+                    </Button>
                   </div>
                 </div>
 
@@ -333,24 +356,24 @@ const ListingDetails = () => {
 
           <div className="border rounded-xl p-4 flex gap-2 !mb-4">
             <img
-              src={listing.thumbnail}
+              src={listing?.thumbnail}
               className="object-cover aspect-square h-20 rounded-xl"
             />
 
             <span>
-              <p className="font-semibold text-lg">{listing.title}</p>
-              <p className="modal-desc">{listing.location}</p>
-              <p className="font-medium">Rs. {formatNumber(listing.price)}</p>
+              <p className="font-semibold text-lg">{listing?.title}</p>
+              <p className="modal-desc">{listing?.location}</p>
+              <p className="font-medium">Rs. {formatNumber(listing?.price)}</p>
             </span>
           </div>
 
           <h3 className="font-semibold">Payment Details</h3>
 
           <div className="inline-flex items-center justify-between w-full !mb-4 text-sm">
-            <p>10% of {formatNumber(listing.price)}</p>
+            <p>10% of {formatNumber(listing?.price)}</p>
 
             <p className="font-semibold">
-              Rs. {formatNumber(listing.price * 0.1)}
+              Rs. {formatNumber(listing?.price * 0.1)}
             </p>
           </div>
 

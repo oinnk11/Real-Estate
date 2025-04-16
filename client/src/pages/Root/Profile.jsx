@@ -248,7 +248,7 @@ const Profile = () => {
   }, [user.id]);
 
   return (
-    <div className="fluid py-12 space-y-8">
+    <div className="fluid py-12 space-y-8 min-h-no-nav">
       <div className="grid md:grid-cols-3 gap-4 w-full">
         {/* PROFILE INFO */}
         <div>

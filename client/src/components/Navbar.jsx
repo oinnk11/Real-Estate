@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import Button from "./Button";
 import useAuthContext from "../hooks/useAuthContext";
 import profilePlaceholder from "../assets/profilePlaceholder.png";
-import { Bell, Plus } from "lucide-react";
+import { Bell, Inbox, Plus, User } from "lucide-react";
+import DropdownMenu from "./DropdownMenu";
 
 const Navbar = () => {
   const { user } = useAuthContext();
@@ -34,16 +35,42 @@ const Navbar = () => {
               <p className="text-sm font-medium">Create</p>
             </Link>
             <Link
+              to="/inbox"
+              className="btn-neutral !p-2 !rounded-full aspect-square !hidden md:!flex"
+            >
+              <Inbox className="size-5" />
+            </Link>
+            <Link
               to="/notifications"
-              className="btn-neutral !rounded-full aspect-square"
+              className="btn-neutral !p-2 !rounded-full aspect-square !hidden md:!flex"
             >
               <Bell className="size-5" />
             </Link>
-            <Link to="/profile">
-              <div className="rounded-full size-10 overflow-hidden">
-                <img src={profilePlaceholder} className="object-contain" />
-              </div>
-            </Link>
+            <DropdownMenu
+              trigger={
+                <div className="rounded-full size-10 overflow-hidden flex items-center justify-center">
+                  <img src={profilePlaceholder} className="object-contain" />
+                </div>
+              }
+            >
+              <ul className="w-full space-y-1">
+                <Link to="/inbox" className="w-full">
+                  <li className="dropdown-menu-item">
+                    <Inbox className="size-5" /> Inbox
+                  </li>
+                </Link>
+                <Link to="/notifications" className="w-full">
+                  <li className="dropdown-menu-item">
+                    <Bell className="size-5" /> Notifications
+                  </li>
+                </Link>
+                <Link to="/profile" className="w-full">
+                  <li className="dropdown-menu-item">
+                    <User className="size-5" /> Profile
+                  </li>
+                </Link>
+              </ul>
+            </DropdownMenu>
           </div>
         ) : (
           <div className="flex items-center gap-4">
