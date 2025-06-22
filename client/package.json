@@ -14,9 +14,11 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^0.471.0",
     "react": "^18.3.1",
+    "react-chatbotify": "^2.1.0",
     "react-dom": "^18.3.1",
     "react-modal": "^3.16.3",
     "react-router-dom": "^7.1.1",
+    "react-tiny-popover": "^8.1.6",
     "react-toastify": "^11.0.3",
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^2.6.0"

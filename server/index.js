@@ -22,6 +22,7 @@ import adminRoute from "./routes/adminRoute.js";
 import paymentRoute from "./routes/paymentRoute.js";
 import bookingRoute from "./routes/bookingRoute.js";
 import notificationRoute from "./routes/notificationRoute.js";
+import botRoute from "./routes/botRoute.js";
 import chatRoute from "./routes/chatRoute.js";
 import messageRoute from "./routes/messageRoute.js";
 import { authenticateToken } from "./middleware/authenticateToken.js";
@@ -61,6 +62,7 @@ const PORT = process.env.PORT;
     app.use("/api/notification", notificationRoute);
     app.use("/api/chat", authenticateToken, chatRoute);
     app.use("/api/message", authenticateToken, messageRoute);
+    app.use("/api/bot", botRoute);
 
     const server = http.createServer(app);
 

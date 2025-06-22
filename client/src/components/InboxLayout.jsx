@@ -1,7 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import ConversationCard from "./ConversationCard";
 import { twMerge } from "tailwind-merge";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getUserChats } from "../hooks/useChat";
 import useAuthContext from "../hooks/useAuthContext";
 import { Loader2 } from "lucide-react";
@@ -16,29 +16,29 @@ const InboxLayout = () => {
   const [chats, setChats] = useState([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
 
-  const fetchChats = async () => {
+  const fetchChats = useCallback(async () => {
     const response = await getUserChats(user.id);
 
     if (response.success) {
       setChats(response.data);
     }
-  };
-
-  socket.on("receiveMessage", () => {
-    fetchChats();
-  });
+  }, [user.id]);
 
   useEffect(() => {
     setIsChatLoading(true);
     fetchChats();
     setIsChatLoading(false);
-  }, []);
+
+    socket.on("receiveMessage", () => {
+      fetchChats();
+    });
+  }, [fetchChats]);
 
   return (
     <div className="fluid max-md:p-0 flex h-full">
       <div
         className={twMerge(
-          "max-w-[300px] w-full border-x py-4 px-2 h-[calc(100vh-80px)] overflow-y-auto",
+          "max-w-[300px] w-full border-x py-4 px-2 h-[calc(100vh-80px)] overflow-y-auto hide-scrollbar",
           isInboxPage ? "max-md:max-w-full" : "max-md:w-0 max-md:hidden"
         )}
       >

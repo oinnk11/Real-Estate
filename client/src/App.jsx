@@ -7,9 +7,7 @@ import About from "./pages/Root/About";
 import Listings from "./pages/Root/Listings";
 import AdminListings from "./pages/Admin/Listings";
 import ListingDetails from "./pages/Root/ListingDetails";
-import Chat from "./pages/Root/Chat";
 import AdminLayout from "./components/AdminLayout";
-import InboxLayout from "./components/InboxLayout";
 import Dashboard from "./pages/Admin/Dashboard";
 import AdminLogin from "./pages/Admin/AdminLogin";
 import Settings from "./pages/Admin/Settings";
@@ -23,6 +21,8 @@ import Create from "./pages/Root/Create";
 import Payment from "./pages/Root/Payment";
 import Notifications from "./pages/Root/Notifications";
 import Inbox from "./pages/Root/Inbox";
+import Chat from "./pages/Root/Chat";
+import InboxLayout from "./components/InboxLayout";
 
 function App() {
   const { user, isLoading } = useAuthContext();
